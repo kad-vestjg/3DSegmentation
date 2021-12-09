@@ -11,7 +11,7 @@ using namespace std;
 using namespace nanoflann;
 
 const int DOTSPERLINE = 20;
-const int MAXNUMPTS = 10000000;
+const int MAXNUMPTS = 100000000;
 
 void readDataFromFile( std::string filepath, PointCloud<double> &cloud )
 {
@@ -37,8 +37,8 @@ void readDataFromFile( std::string filepath, PointCloud<double> &cloud )
 			//ptReader >> x >> y >> z >> a >> b >> c >> labelIdx;
 			//ptReader >> x >> y >> z >> a >> b >> c >> color;
 			//ptReader >> x >> y >> z >> color >> a >> b >> c;
-			//ptReader >> x >> y >> z >> a >> b >> c ;
-			ptReader >> x >> y >> z >>t_stamp;
+			ptReader >> x >> y >> z >> a >> b >> c ;
+			//ptReader >> x >> y >> z >> t_stamp;
 			//ptReader >> x >> y >> z >> color;
 			//ptReader >> x >> y >> z >> nx >> ny >> nz;
 
