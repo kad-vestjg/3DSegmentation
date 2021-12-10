@@ -26,25 +26,25 @@ void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &
 	CTimer timer;
 	char msg[1024];
 
+	cout << "PROCESSING---------------------------------------------------------" << endl;
 	timer.Start();
-	cout<<endl<<endl;
-	cout << "Step 1: Point Cloud Segmentation..." << endl;
+	cout << "Step 1: Segmentation..." << endl;
 	regions.clear();
 	pointCloudSegmentation( regions , thAngle);
 	timer.Stop();
 	totalTime += timer.GetElapsedSeconds();
 	timer.PrintElapsedTimeMsg(msg);
-	cout << "Point Cloud Segmentation Time: " << msg << "." << endl << endl;
+	cout << "Segmentation Time             : " << msg << "." << endl << endl;
 	ts.push_back(timer.GetElapsedSeconds());
 
 	// step2: plane based 3D line detection
 	timer.Start();
-	cout << "Step 2: Plane Based 3D LineDetection..." << endl;
+	cout << "Step 2: LineDetection..." << endl;
 	planeBased3DLineDetection( regions, planes );
 	timer.Stop();
 	totalTime += timer.GetElapsedSeconds();
 	timer.PrintElapsedTimeMsg(msg);
-	cout << "Plane Based 3D LineDetection Time: " << msg << "." << endl << endl;
+	cout << "LineDetection Time            : " << msg << "." << endl << endl;
 	ts.push_back(timer.GetElapsedSeconds());
 
 	// step3: post processing
@@ -54,10 +54,10 @@ void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &
 	timer.Stop();
 	totalTime += timer.GetElapsedSeconds();
 	timer.PrintElapsedTimeMsg(msg);
-	cout << "Post Processing Time: " << msg << endl << endl;
+	cout << "Post Processing Time          : " << msg << "." << endl << endl;
 	ts.push_back(timer.GetElapsedSeconds());
 
-	cout << "Total Time: " << totalTime << "." << endl << endl;
+	cout << "Total Processing Time         : " << totalTime << "0  seconds." << endl << endl;
 }
 
 

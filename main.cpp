@@ -21,9 +21,10 @@ const int MAXNUMPTS = 100000000;
 void readDataFromFile( std::string filepath, PointCloud<double> &cloud )
 {
 	cloud.pts.reserve(MAXNUMPTS);
-	cout<<"Reading data ..."<<endl;
 
-	// 1. read in point data
+	// read in point data
+	cout << "READING DATA-------------------------------------------------------" << endl;
+
 	std::ifstream ptReader( filepath );
 	std::vector<cv::Point3d> lidarPoints;
 	double x = 0, y = 0, z = 0;
@@ -38,13 +39,14 @@ void readDataFromFile( std::string filepath, PointCloud<double> &cloud )
 		ptReader.close();
 	}
 
-	std::cout << "Total num of points: " << cloud.pts.size() << "\n";
+	std::cout << "Total num of points: " << cloud.pts.size() << endl << endl;
 }
 
 void writeOutPlanes( string filePath, std::vector<PLANE> &planes, double scale )
 {
 	// write out bounding polygon result
 	string fileEdgePoints = filePath + "planes.txt";
+	cout << "Writing: " << fileEdgePoints << endl;
 	FILE *fp2 = fopen( fileEdgePoints.c_str(), "w");
 	for (int p=0; p<planes.size(); ++p)
 	{
@@ -81,6 +83,7 @@ void writeOutLines( string filePath, std::vector<std::vector<cv::Point3d> > &lin
 {
 	// write out bounding polygon result
 	string fileEdgePoints = filePath + "lines.txt";
+	cout << "Writing: " << fileEdgePoints << endl;
 	FILE *fp2 = fopen( fileEdgePoints.c_str(), "w");
 	for (int p=0; p<lines.size(); ++p)
 	{
@@ -109,8 +112,9 @@ void writeOutLines( string filePath, std::vector<std::vector<cv::Point3d> > &lin
 
 void writeOutClassifiedData(string filePath, PointCloud<double> &data, std::vector<std::vector<int>> &regions)
 {
-	string fileEdgePoints = filePath + "classified.txt";
-	FILE *fp2 = fopen(fileEdgePoints.c_str(), "w");
+	string filePoints = filePath + "classified.txt";
+	cout << "Writing: " << filePoints << endl;
+	FILE *fp2 = fopen(filePoints.c_str(), "w");
 
 	for (int i = 0; i < regions.size(); ++i)
 	{
@@ -173,6 +177,11 @@ void main(int argc, char** argv)
 
 	// header
 	writeHeader();
+	cout << "OPTIONS------------------------------------------------------------" << endl;
+	cout << "Inputfile         : " << fileData << endl;
+	cout << "Output prefix     : " << fileOut << endl;
+	cout << "Normals threshold : " << thAngle * 180 / CV_PI << " degrees." << endl;
+	cout << "Supporting points : " << k << " points." << endl << endl;
 
 	// read in data
 	PointCloud<double> pointData; 
@@ -186,18 +195,18 @@ void main(int argc, char** argv)
 
 	//run detector
 	detector.run( pointData, k, planes, lines, ts, regions, thAngle);
-	cout << "Results" << endl;
-	cout << "* regions number: " << regions.size() << endl;
-	cout << "* lines number: " << lines.size() << endl;
-	cout << "* planes number: " << planes.size() << endl;
+	cout << "RESULTS------------------------------------------------------------" << endl;
+	cout << "Regions number : " << regions.size() << endl;
+	cout << "Lines number   : " << lines.size() << endl;
+	cout << "Planes number  : " << planes.size() << endl << endl;
 	
 	//create output
-	cout << endl << "Writing output..." << endl;
+	cout << "WRITING OUTPUT-----------------------------------------------------" << endl;
 	writeOutPlanes( fileOut, planes, detector.scale );
 	writeOutLines( fileOut, lines, detector.scale );
-	writeOutClassifiedData(fileOut, pointData, regions);
+	writeOutClassifiedData( fileOut, pointData, regions );
 
 	//finish
-	cout << "Done!" << endl;
+	cout << endl << "Done!" << endl;
 
 }

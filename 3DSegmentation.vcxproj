@@ -109,6 +109,7 @@
     <ClInclude Include="CommonFunctions.h" />
     <ClInclude Include="LineDetection3D.h" />
     <ClInclude Include="nanoflann.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
