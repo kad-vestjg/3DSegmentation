@@ -21,29 +21,14 @@ void readDataFromFile( std::string filepath, PointCloud<double> &cloud )
 	// 1. read in point data
 	std::ifstream ptReader( filepath );
 	std::vector<cv::Point3d> lidarPoints;
-	double x = 0, y = 0, z = 0, t_stamp = 0, color = 0;
-	double nx, ny, nz;
-	int a = 0, b = 0, c = 0; 
-	int labelIdx = 0;
-	int count = 0;
-	int countTotal = 0;
+	double x = 0, y = 0, z = 0;
+	string line;
 	if( ptReader.is_open() )
 	{
-		while ( !ptReader.eof() ) 
+		while (getline(ptReader, line))
 		{
-			//ptReader >> x >> y >> z;
-
-
-			//ptReader >> x >> y >> z >> a >> b >> c >> labelIdx;
-			//ptReader >> x >> y >> z >> a >> b >> c >> color;
-			//ptReader >> x >> y >> z >> color >> a >> b >> c;
-			ptReader >> x >> y >> z >> a >> b >> c ;
-			//ptReader >> x >> y >> z >> t_stamp;
-			//ptReader >> x >> y >> z >> color;
-			//ptReader >> x >> y >> z >> nx >> ny >> nz;
-
-			cloud.pts.push_back(PointCloud<double>::PtData(x,y,z));
-
+			stringstream(line) >> x >> y >> z;
+			cloud.pts.push_back(PointCloud<double>::PtData(x, y, z));
 		}
 		ptReader.close();
 	}
@@ -144,18 +129,28 @@ void writeHeader()
 
 void Usage()
 {
-	cerr << "USE: 3DSegmentation <filename.txt>" << endl << endl;
-	cerr << "     FileName.txt must contain X Y Z n, " << endl;
-	cerr << "     where n is either the GPS-time or any other numerical placeholder" << endl;
+	cerr << "USE: 3DSegmentation <Filename.txt> [threshold-angle]" << endl << endl;
+	cerr << "+-----------------------------------------------------------------+" << endl;
+	cerr << "+--  FileName.txt must contain X Y Z (in that order) in the first |" << endl;
+	cerr << "|    three columes. Any additional columns will be skipped        |" << endl;
+	cerr << "|                                                                 |" << endl;
+	cerr << "+--  [THRESH_ANGLE] is the threshold angle (in degrees!) for      |" << endl;
+	cerr << "|    the normals in the segmentation. If not set this option      |" << endl;
+	cerr << "|    defaults to 15 degrees                                       |" << endl;
+	cerr << "+----------------------------------------------------------------GV" << endl;
 }
 
 
 void main(int argc, char** argv) 
 {
+	double thAngle = 15.0 / 180.0*CV_PI;
 	//cmdl handling
-	if (argc != 2) {
+	if (argc != 2 && argc != 3) {
 		Usage();
 		exit(99);
+	}
+	if (argc == 3) {
+		thAngle = stod(argv[2]) / 180.0*CV_PI;
 	}
 
 	//set filenames
@@ -178,7 +173,7 @@ void main(int argc, char** argv)
 	std::vector<std::vector<int>> regions;
 
 	//run detector
-	detector.run( pointData, DOTSPERLINE, planes, lines, ts, regions);
+	detector.run( pointData, DOTSPERLINE, planes, lines, ts, regions, thAngle);
 	cout << "Results" << endl;
 	cout << "* regions number: " << regions.size() << endl;
 	cout << "* lines number: " << lines.size() << endl;

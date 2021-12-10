@@ -15,7 +15,7 @@ LineDetection3D::~LineDetection3D()
 {
 }
 
-void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &planes, std::vector<std::vector<cv::Point3d> > &lines, std::vector<double> &ts, std::vector<std::vector<int>> &regions)
+void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &planes, std::vector<std::vector<cv::Point3d> > &lines, std::vector<double> &ts, std::vector<std::vector<int>> &regions, double thAngle)
 {
 	this->pointData = data;
 	this->pointNum = data.pts.size();
@@ -30,7 +30,7 @@ void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &
 	cout<<endl<<endl;
 	cout << "Step 1: Point Cloud Segmentation..." << endl;
 	regions.clear();
-	pointCloudSegmentation( regions );
+	pointCloudSegmentation( regions , thAngle);
 	timer.Stop();
 	totalTime += timer.GetElapsedSeconds();
 	timer.PrintElapsedTimeMsg(msg);
@@ -61,14 +61,13 @@ void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &
 }
 
 
-void LineDetection3D::pointCloudSegmentation( std::vector<std::vector<int> > &regions )
+void LineDetection3D::pointCloudSegmentation( std::vector<std::vector<int> > &regions, double thAngle)
 {
 	cout<<"------- Normal Calculation..."<<endl;
 	PCAFunctions pcaer;
 	pcaer.Ori_PCA( this->pointData, this->k, this->pcaInfos, this->scale, this->magnitd );
 	
 	cout<<"------- Region Growing..."<<endl;
-	double thAngle = 15.0/180.0*CV_PI;
 	regionGrow( thAngle, regions );
 
 	// step3: region merging
