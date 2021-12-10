@@ -1,3 +1,9 @@
+/*
+   This software is based on the code by Xiaohu Lu
+   https://arxiv.org/abs/1901.02532
+   https://github.com/xiaohulugo/3DLineDetection
+*/
+
 #include <stdio.h>
 #include <fstream>
 
@@ -10,7 +16,6 @@ using namespace cv;
 using namespace std;
 using namespace nanoflann;
 
-const int DOTSPERLINE = 20;
 const int MAXNUMPTS = 100000000;
 
 void readDataFromFile( std::string filepath, PointCloud<double> &cloud )
@@ -122,35 +127,42 @@ void writeOutClassifiedData(string filePath, PointCloud<double> &data, std::vect
 
 void writeHeader()
 {
-	cout << "+-----------------+" << endl;
-	cout << "| 3D SEGMENTATION |" << endl;
-	cout << "+-----------------+" << endl;
+	cout << "+-----------------------------------------------------------------+" << endl;
+	cout << "|             3D SEGMENTS, LINES AND PLANES DETECTION             |" << endl;
+	cout << "+-----------------------------------------------------------------+" << endl;
 }
 
 void Usage()
 {
-	cerr << "USE: 3DSegmentation <Filename.txt> [threshold-angle]" << endl << endl;
-	cerr << "+-----------------------------------------------------------------+" << endl;
-	cerr << "+--  FileName.txt must contain X Y Z (in that order) in the first |" << endl;
-	cerr << "|    three columes. Any additional columns will be skipped        |" << endl;
-	cerr << "|                                                                 |" << endl;
-	cerr << "+--  [THRESH_ANGLE] is the threshold angle (in degrees!) for      |" << endl;
-	cerr << "|    the normals in the segmentation. If not set this option      |" << endl;
-	cerr << "|    defaults to 15 degrees                                       |" << endl;
-	cerr << "+----------------------------------------------------------------GV" << endl;
+	cerr << "USE: 3DSegmentation <Filename.txt> [threshold-angle] [supporting-points]" << endl << endl;
+	cerr << "+----------------------------------------------------------------------+" << endl;
+	cerr << "+--  FileName.txt must contain X Y Z (in that order) in the first      |" << endl;
+	cerr << "|    three columes. Any additional columns will be skipped             |" << endl;
+	cerr << "|                                                                      |" << endl;
+	cerr << "+--  [threshold-angle] is the threshold angle (in degrees!) for the    |" << endl;
+	cerr << "|    normals in the segmentation. If not set this option defaults to   |" << endl;
+	cerr << "|    15 degrees                                                        |" << endl;
+	cerr << "|                                                                      |" << endl;
+	cerr << "+--  [supporting points] is the number of supporting points per plane  |" << endl;
+	cerr << "|    for the segementation. If not set this option defaults to 20      |" << endl;
+	cerr << "|                                                                      |" << endl;
+	cerr << "|    NOTE: EITHER BOTH OR NONE OF THE OPTIONS NEED TO BE SET!          |" << endl;
+	cerr << "+---------------------------------------------------------------------GV" << endl;
 }
 
 
 void main(int argc, char** argv) 
 {
+	int k = 20;
 	double thAngle = 15.0 / 180.0*CV_PI;
 	//cmdl handling
-	if (argc != 2 && argc != 3) {
+	if (argc != 2 && argc != 4) {
 		Usage();
 		exit(99);
 	}
-	if (argc == 3) {
+	if (argc == 4) {
 		thAngle = stod(argv[2]) / 180.0*CV_PI;
+		k = stoi(argv[3]);
 	}
 
 	//set filenames
@@ -173,7 +185,7 @@ void main(int argc, char** argv)
 	std::vector<std::vector<int>> regions;
 
 	//run detector
-	detector.run( pointData, DOTSPERLINE, planes, lines, ts, regions, thAngle);
+	detector.run( pointData, k, planes, lines, ts, regions, thAngle);
 	cout << "Results" << endl;
 	cout << "* regions number: " << regions.size() << endl;
 	cout << "* lines number: " << lines.size() << endl;
