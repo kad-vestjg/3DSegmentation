@@ -290,12 +290,10 @@ void PCAFunctions::Ori_PCA( PointCloud<double> &cloud, int k, std::vector<PCAInf
 }
 
 
-void PCAFunctions::PCASingle( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo )
+void PCAFunctions::PCASingle( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo , double a, double thRz )
 {
 	int i, j;
 	int k = pointData.size();
-	double a = 1.4826;
-	double thRz = 2.5;
 
 	// 
 	pcaInfo.idxIn.resize( k );
@@ -328,13 +326,11 @@ void PCAFunctions::PCASingle( std::vector<std::vector<double> > &pointData, PCAI
 	pcaInfo.planePt = h_mean;
 
 	// outliers removal via MCMD
-	MCMD_OutlierRemoval( pointData, pcaInfo );	
+	MCMD_OutlierRemoval( pointData, pcaInfo, a, thRz );	
 }
 
-void PCAFunctions::MCMD_OutlierRemoval( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo )
+void PCAFunctions::MCMD_OutlierRemoval( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo, double a, double thRz)
 {
-	double a = 1.4826;
-	double thRz = 2.5;
 	int num = pcaInfo.idxAll.size();
 
 	// ODs

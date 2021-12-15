@@ -15,7 +15,7 @@ LineDetection3D::~LineDetection3D()
 {
 }
 
-void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &planes, std::vector<std::vector<cv::Point3d> > &lines, std::vector<double> &ts, std::vector<std::vector<int>> &regions, double thAngle)
+void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &planes, std::vector<std::vector<cv::Point3d> > &lines, std::vector<double> &ts, std::vector<std::vector<int>> &regions, double thAngle, double a, double thRz, double thRegionSize)
 {
 	this->pointData = data;
 	this->pointNum = data.pts.size();
@@ -30,7 +30,7 @@ void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &
 	timer.Start();
 	cout << "Step 1: Segmentation..." << endl;
 	regions.clear();
-	pointCloudSegmentation( regions , thAngle);
+	pointCloudSegmentation( regions , thAngle, a, thRz, thRegionSize);
 	timer.Stop();
 	totalTime += timer.GetElapsedSeconds();
 	timer.PrintElapsedTimeMsg(msg);
@@ -40,7 +40,7 @@ void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &
 	// step2: plane based 3D line detection
 	timer.Start();
 	cout << "Step 2: LineDetection..." << endl;
-	planeBased3DLineDetection( regions, planes );
+	planeBased3DLineDetection( regions, planes, a, thRz );
 	timer.Stop();
 	totalTime += timer.GetElapsedSeconds();
 	timer.PrintElapsedTimeMsg(msg);
@@ -61,7 +61,7 @@ void LineDetection3D::run( PointCloud<double> &data, int k, std::vector<PLANE> &
 }
 
 
-void LineDetection3D::pointCloudSegmentation( std::vector<std::vector<int> > &regions, double thAngle)
+void LineDetection3D::pointCloudSegmentation( std::vector<std::vector<int> > &regions, double thAngle, double a, double thRz, double thRegionSize)
 {
 	cout<<"------- Normal Calculation..."<<endl;
 	PCAFunctions pcaer;
@@ -73,7 +73,7 @@ void LineDetection3D::pointCloudSegmentation( std::vector<std::vector<int> > &re
 	// step3: region merging
 	cout<<"------- Region Merging..."<<endl;
 	double thAnglePatch = thAngle;
-	regionMerging( thAnglePatch, regions );
+	regionMerging( thAnglePatch, regions, a, thRz, thRegionSize );
 }
 
 
@@ -168,10 +168,8 @@ void LineDetection3D::regionGrow( double thAngle, std::vector<std::vector<int> >
 	}
 }
 
-void LineDetection3D::regionMerging( double thAngle, std::vector<std::vector<int> > &regions )
+void LineDetection3D::regionMerging( double thAngle, std::vector<std::vector<int> > &regions, double a, double thRz, double thRegionSize )
 {
-	double thRegionSize = 600000;
-
 	// step1: plane fitting via PCA for each region
 	std::vector<PCAInfo> patches;
 	patches.resize( regions.size() );
@@ -190,7 +188,7 @@ void LineDetection3D::regionMerging( double thAngle, std::vector<std::vector<int
 		}
 
 		PCAFunctions pcaer;
-		pcaer.PCASingle( pointDataCur, patches[i] );
+		pcaer.PCASingle( pointDataCur, patches[i], a, thRz );
 
 		patches[i].idxAll = regions[i];
 		double scaleAvg = 0.0;
@@ -378,7 +376,7 @@ void LineDetection3D::regionMerging( double thAngle, std::vector<std::vector<int
 	}
 }
 
-void LineDetection3D::planeBased3DLineDetection( std::vector<std::vector<int> > &regions, std::vector<PLANE> &planes )
+void LineDetection3D::planeBased3DLineDetection( std::vector<std::vector<int> > &regions, std::vector<PLANE> &planes, double a, double thRz )
 {
 	double thAngle = 10.0/180.0*CV_PI;
 	double thLineLength = 8*this->scale;
@@ -400,7 +398,7 @@ void LineDetection3D::planeBased3DLineDetection( std::vector<std::vector<int> > 
 		}
 
 		PCAFunctions pcaer;
-		pcaer.PCASingle( pointDataCur, patches[i] );
+		pcaer.PCASingle( pointDataCur, patches[i], a, thRz );
 
 		patches[i].idxAll = regions[i];
 		for ( int j=0; j<patches[i].idxIn.size(); ++j )

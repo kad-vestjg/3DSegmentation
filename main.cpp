@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <fstream>
+#include <liblas\liblas.hpp>
 
 #include "LineDetection3D.h"
 #include "nanoflann.hpp"
@@ -18,12 +19,40 @@ using namespace nanoflann;
 
 const int MAXNUMPTS = 100000000;
 
+void readDataFromLASFile(std::string filepath, PointCloud<double> &cloud)
+{
+	cloud.pts.reserve(MAXNUMPTS);
+
+	cout << "READING DATA (LAS/LAZ FORMAT)--------------------------------------" << endl;
+
+	std::ifstream lasReader( filepath, std::ios::in | std::ios::binary );
+	std::vector<cv::Point3d> lidarPoints;
+	double x = 0, y = 0, z = 0;
+	liblas::ReaderFactory f;
+	liblas::Reader reader = f.CreateWithStream( lasReader );
+
+	liblas::Header const& header = reader.GetHeader();
+	std::cout << "Compressed   : " << ((header.Compressed() == true) ? "true" : "false") << endl;
+	std::cout << "Signature    : " << header.GetFileSignature() << endl;
+	std::cout << "Points count : " << header.GetPointRecordsCount() << endl;
+
+	while (reader.ReadNextPoint())
+	{
+		liblas::Point const& p = reader.GetPoint();
+		cloud.pts.push_back(PointCloud<double>::PtData(p.GetX(), p.GetY(), p.GetZ()));
+	}
+	lasReader.close();
+
+	std::cout << "Total num of points: " << cloud.pts.size() << endl << endl;
+
+}
+
 void readDataFromFile( std::string filepath, PointCloud<double> &cloud )
 {
 	cloud.pts.reserve(MAXNUMPTS);
 
 	// read in point data
-	cout << "READING DATA-------------------------------------------------------" << endl;
+	cout << "READING DATA (TXT FORMAT)------------------------------------------" << endl;
 
 	std::ifstream ptReader( filepath );
 	std::vector<cv::Point3d> lidarPoints;
@@ -138,7 +167,7 @@ void writeHeader()
 
 void Usage()
 {
-	cerr << "USE: 3DSegmentation <Filename.txt> [threshold-angle] [supporting-points]" << endl << endl;
+	cerr << "USE: 3DSegmentation <Filename.txt> [threshold-angle] [threshold-dZ] [supporting-points]" << endl << endl;
 	cerr << "+----------------------------------------------------------------------+" << endl;
 	cerr << "+--  FileName.txt must contain X Y Z (in that order) in the first      |" << endl;
 	cerr << "|    three columes. Any additional columns will be skipped             |" << endl;
@@ -147,33 +176,65 @@ void Usage()
 	cerr << "|    normals in the segmentation. If not set this option defaults to   |" << endl;
 	cerr << "|    15 degrees                                                        |" << endl;
 	cerr << "|                                                                      |" << endl;
-	cerr << "+--  [supporting points] is the number of supporting points per plane  |" << endl;
+	cerr << "+--  [threshold-dZ] is threshold for the deviation from the estimated  |" << endl;
+	cerr << "|    plane during segmentation. If not set this option defaults to 2.5 |" << endl;
+	cerr << "|                                                                      |" << endl;
+	cerr << "+--  [supporting-points] is the number of supporting points per plane  |" << endl;
 	cerr << "|    for the segementation. If not set this option defaults to 20      |" << endl;
 	cerr << "|                                                                      |" << endl;
-	cerr << "|    NOTE: EITHER BOTH OR NONE OF THE OPTIONS NEED TO BE SET!          |" << endl;
+	cerr << "|    NOTE: EITHER ALL OR NONE OF THE OPTIONS NEED TO BE SET!          |" << endl;
 	cerr << "+---------------------------------------------------------------------GV" << endl;
 }
 
+bool lasOrNot(string filename)
+{
+	string UP = filename;
+	for_each(UP.begin(), UP.end(), [](char& c) {
+		c = ::toupper(c);
+	});
+	string EXT = UP.substr(UP.find_last_of(".") + 1, 3);
+	if (EXT == "LAS" || EXT == "LAZ") return true;
+
+	return false;
+}
+
+bool does_file_exist(string fileName)
+{
+	std::ifstream infile(fileName);
+	return infile.good();
+}
 
 void main(int argc, char** argv) 
 {
 	int k = 20;
 	double thAngle = 15.0 / 180.0*CV_PI;
+	double thRegionSize = 600000;
+	double a = 1.4826;
+	double thRz = 2.5;
+
 	//cmdl handling
-	if (argc != 2 && argc != 4) {
+	if (argc != 2 && argc != 5) {
 		Usage();
 		exit(99);
 	}
-	if (argc == 4) {
+	if (argc == 5) {
 		thAngle = stod(argv[2]) / 180.0*CV_PI;
-		k = stoi(argv[3]);
+		thRz = stod(argv[3]);
+		k = stoi(argv[4]);
 	}
 
 	//set filenames
 	//DEB: fileData = "C:\\Users\\VestjensGerbrand\\OneDrive - Kadaster\\Kwaliteit_3D_Modellen\\TestPlaneSegmentation\\C_05HN2_Selection.txt";  //"D://Facade//data.txt";
 	string fileData = argv[1];
-	string fileOut = fileData.substr(0, fileData.find_last_of("\\") + 1) + "SEG_";
+	string fileOut = fileData.substr(0, fileData.find_last_of(".")) + "_";
 
+	//check if inputfile exists...
+	if (!does_file_exist(fileData)) {
+		cerr << "** File does not exist: " << fileData << endl;
+		exit(99);
+	}
+
+	bool isLas = lasOrNot(fileData);
 
 	// header
 	writeHeader();
@@ -181,11 +242,20 @@ void main(int argc, char** argv)
 	cout << "Inputfile         : " << fileData << endl;
 	cout << "Output prefix     : " << fileOut << endl;
 	cout << "Normals threshold : " << thAngle * 180 / CV_PI << " degrees." << endl;
-	cout << "Supporting points : " << k << " points." << endl << endl;
+	cout << "Delta-Z threshold : " << thRz << endl;
+	cout << "Supporting points : " << k << " points." << endl;
+	cout << "Amplification fct : " << a << endl;
+	cout << "Regionsize thresh : " << thRegionSize << endl;
+	cout << endl;
 
 	// read in data
 	PointCloud<double> pointData; 
-	readDataFromFile( fileData, pointData );
+	if (isLas) {
+		readDataFromLASFile(fileData, pointData);
+	}
+	else {
+		readDataFromFile(fileData, pointData);
+	}
 
 	LineDetection3D detector;
 	std::vector<PLANE> planes;
@@ -194,7 +264,7 @@ void main(int argc, char** argv)
 	std::vector<std::vector<int>> regions;
 
 	//run detector
-	detector.run( pointData, k, planes, lines, ts, regions, thAngle);
+	detector.run( pointData, k, planes, lines, ts, regions, thAngle, a, thRz, thRegionSize);
 	cout << "RESULTS------------------------------------------------------------" << endl;
 	cout << "Regions number : " << regions.size() << endl;
 	cout << "Lines number   : " << lines.size() << endl;

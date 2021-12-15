@@ -52,9 +52,9 @@ public:
 
 	void Ori_PCA( PointCloud<double> &cloud, int k, std::vector<PCAInfo> &pcaInfos, double &scale, double &magnitd );
 
-	void PCASingle( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo );
+	void PCASingle( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo, double a, double thRz );
 
-	void MCMD_OutlierRemoval( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo );
+	void MCMD_OutlierRemoval( std::vector<std::vector<double> > &pointData, PCAInfo &pcaInfo, double a, double thRz );
 
 	double meadian( std::vector<double> dataset );
 };

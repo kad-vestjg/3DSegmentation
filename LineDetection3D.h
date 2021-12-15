@@ -23,18 +23,18 @@ public:
 	LineDetection3D();
 	~LineDetection3D();
 
-	void run( PointCloud<double> &data, int k, std::vector<PLANE> &planes, std::vector<std::vector<cv::Point3d> > &lines, std::vector<double> &ts, std::vector<std::vector<int>> &regions, double thAngle);
+	void run( PointCloud<double> &data, int k, std::vector<PLANE> &planes, std::vector<std::vector<cv::Point3d> > &lines, std::vector<double> &ts, std::vector<std::vector<int>> &regions, double thAngle, double a, double thRz, double thRegionSize);
 
-	void pointCloudSegmentation( std::vector<std::vector<int> > &regions, double thAngle );
+	void pointCloudSegmentation( std::vector<std::vector<int> > &regions, double thAngle, double a, double thRz, double thRegion );
 
-	void planeBased3DLineDetection( std::vector<std::vector<int> > &regions, std::vector<PLANE> &planes );
+	void planeBased3DLineDetection( std::vector<std::vector<int> > &regions, std::vector<PLANE> &planes, double  a, double thRz );
 
 	void postProcessing( std::vector<PLANE> &planes, std::vector<std::vector<cv::Point3d> > &lines );
 
 	// 
 	void regionGrow( double thAngle, std::vector<std::vector<int> > &regions );
 
-	void regionMerging( double thAngle, std::vector<std::vector<int> > &regions );
+	void regionMerging( double thAngle, std::vector<std::vector<int> > &regions, double a, double thRz, double thRegionSize );
 
 	bool maskFromPoint( std::vector<cv::Point2d> &pts2d, double radius, double &xmin, double &ymin, double &xmax, double &ymax, int &margin, cv::Mat &mask );
 
