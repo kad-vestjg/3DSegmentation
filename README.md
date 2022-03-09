@@ -1,2 +1,2 @@
 # 3DSegmentation
-Segmentation of 3D data
+Simple segmentation of 3D data into planes and lines
